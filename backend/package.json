@@ -18,5 +18,10 @@
     "jsonwebtoken": "^9.0.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "chromedriver": "^149.0.0",
+    "geckodriver": "^6.1.0",
+    "selenium-webdriver": "^4.44.0"
   }
 }
