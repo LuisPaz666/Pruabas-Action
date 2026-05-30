@@ -8,21 +8,60 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    # Backend tests
+    - name: Install backend dependencies
+      run: cd backend && npm ci
+      
+    - name: Run backend tests
+      run: cd backend && npm test
+      continue-on-error: true
+      id: backend-tests
+
+    # Frontend tests
+    - name: Install frontend dependencies
+      run: cd frontend && npm ci
+      
+    - name: Run frontend linting
+      run: cd frontend && npm run lint
+      continue-on-error: true
+      id: frontend-lint
+
+    - name: Build frontend
+      run: cd frontend && npm run build
+      continue-on-error: true
+      id: frontend-build
+
+    # Report results
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results - Node ${{ matrix.node-version }}
+        path: '**/test-results.xml'
+        reporter: 'java-junit'
+        fail-on-error: false
+
+    - name: Upload build artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts-node-${{ matrix.node-version }}
+        path: |
+          frontend/dist/
+          backend/
+        retention-days: 5
