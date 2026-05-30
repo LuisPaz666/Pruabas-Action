@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { products } from '../api';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 
@@ -15,18 +15,19 @@ export default function AdminDashboard() {
     image_url: ''
   });
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const data = await products.getAll();
       setProductList(data);
     } catch (err) {
-      console.error(err);
+      console.error('Error loading products:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadProducts();
+  }, [loadProducts]);
 
   const handleOpenModal = (product = null) => {
     if (product) {
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
       closeModal();
       loadProducts();
     } catch (err) {
-      alert('Error guardando producto' + err);
+      alert('Error guardando producto: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -76,7 +77,7 @@ export default function AdminDashboard() {
       try {
         await products.delete(id);
         loadProducts();
-      } catch (err) {
+      } catch {
         alert('Error eliminando producto');
       }
     }
